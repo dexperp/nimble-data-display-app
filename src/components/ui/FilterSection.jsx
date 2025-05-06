@@ -15,7 +15,7 @@ const FilterSection = ({ onFilter }) => {
   const [location, setLocation] = useState("All");
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [minRating, setMinRating] = useState(0);
-  const [sortBy, setSortBy] = useState("");
+  const [sortBy, setSortBy] = useState("default");
 
   const handleFilter = () => {
     onFilter({
@@ -31,7 +31,7 @@ const FilterSection = ({ onFilter }) => {
     setLocation("All");
     setPriceRange([0, 2000]);
     setMinRating(0);
-    setSortBy("");
+    setSortBy("default");
     onFilter({});
   };
 
@@ -99,7 +99,7 @@ const FilterSection = ({ onFilter }) => {
               <SelectValue placeholder="Sort by..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Default</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
               <SelectItem value="price-asc">Price: Low to High</SelectItem>
               <SelectItem value="price-desc">Price: High to Low</SelectItem>
               <SelectItem value="rating-desc">Highest Rated</SelectItem>
