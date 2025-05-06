@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,19 +17,44 @@ import apiService from "@/api/apiService";
 const ReviewForm = ({ destinationId, onReviewSubmitted }) => {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [commentError, setCommentError] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
-
-  const onSubmit = async (data) => {
+  const validateForm = () => {
+    let isValid = true;
+    
+    // Reset error
+    setCommentError("");
+    
+    // Validate comment
+    if (!comment.trim()) {
+      setCommentError("Please enter your review");
+      isValid = false;
+    } else if (comment.trim().length < 10) {
+      setCommentError("Review must be at least 10 characters");
+      isValid = false;
+    }
+    
+    // Validate rating
+    if (rating === 0) {
+      toast.error("Please select a rating");
+      isValid = false;
+    }
+    
+    return isValid;
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     if (!user) {
       toast.error("You must be logged in to submit a review");
       return;
     }
     
-    if (rating === 0) {
-      toast.error("Please select a rating");
+    if (!validateForm()) {
       return;
     }
     
@@ -42,13 +66,13 @@ const ReviewForm = ({ destinationId, onReviewSubmitted }) => {
         userId: user.id,
         userName: user.name,
         rating,
-        comment: data.comment
+        comment
       };
       
       const newReview = await apiService.createReview(reviewData);
       
       toast.success("Review submitted successfully!");
-      reset();
+      setComment("");
       setRating(0);
       
       if (onReviewSubmitted) {
@@ -83,7 +107,7 @@ const ReviewForm = ({ destinationId, onReviewSubmitted }) => {
         <CardTitle>Write a Review</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center mb-4">
             <span className="mr-2 text-sm">Your Rating:</span>
             <div className="flex">
@@ -116,17 +140,12 @@ const ReviewForm = ({ destinationId, onReviewSubmitted }) => {
           <div>
             <Textarea
               placeholder="Share your experience..."
-              {...register("comment", {
-                required: "Please enter your review",
-                minLength: {
-                  value: 10,
-                  message: "Review must be at least 10 characters",
-                },
-              })}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
               className="resize-none h-32"
             />
-            {errors.comment && (
-              <p className="text-destructive text-sm mt-1">{errors.comment.message}</p>
+            {commentError && (
+              <p className="text-destructive text-sm mt-1">{commentError}</p>
             )}
           </div>
         </form>
@@ -134,7 +153,7 @@ const ReviewForm = ({ destinationId, onReviewSubmitted }) => {
       <CardFooter>
         <Button 
           className="w-full" 
-          onClick={handleSubmit(onSubmit)}
+          onClick={handleSubmit}
           disabled={isSubmitting}
         >
           {isSubmitting ? "Submitting..." : "Submit Review"}

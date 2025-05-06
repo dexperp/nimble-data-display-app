@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,18 +72,39 @@ const Login = () => {
 };
 
 const LoginForm = ({ onLogin }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: {
-      email: "",
-      password: ""
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!email) {
+      errors.email = "Email is required";
+    } else if (!/^\S+@\S+$/i.test(email)) {
+      errors.email = "Invalid email address";
     }
-  });
+    
+    if (!password) {
+      errors.password = "Password is required";
+    } else if (password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
   
-  const onSubmit = async (data) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsSubmitting(true);
-    await onLogin(data.email, data.password);
+    await onLogin(email, password);
     setIsSubmitting(false);
   };
   
@@ -94,7 +114,7 @@ const LoginForm = ({ onLogin }) => {
         <CardTitle>Sign In</CardTitle>
         <CardDescription>Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -103,16 +123,11 @@ const LoginForm = ({ onLogin }) => {
               placeholder="name@example.com"
               type="email"
               autoComplete="email"
-              {...register("email", { 
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Invalid email address"
-                }
-              })}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+            {formErrors.email && (
+              <p className="text-sm text-destructive">{formErrors.email}</p>
             )}
           </div>
           
@@ -122,16 +137,11 @@ const LoginForm = ({ onLogin }) => {
               id="password"
               type="password"
               autoComplete="current-password"
-              {...register("password", { 
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters"
-                }
-              })}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+            {formErrors.password && (
+              <p className="text-sm text-destructive">{formErrors.password}</p>
             )}
           </div>
           
@@ -150,24 +160,53 @@ const LoginForm = ({ onLogin }) => {
 };
 
 const RegisterForm = ({ onRegister, onSuccess }) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: ""
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!name) {
+      errors.name = "Name is required";
+    } else if (name.length < 2) {
+      errors.name = "Name must be at least 2 characters";
     }
-  });
+    
+    if (!email) {
+      errors.email = "Email is required";
+    } else if (!/^\S+@\S+$/i.test(email)) {
+      errors.email = "Invalid email address";
+    }
+    
+    if (!password) {
+      errors.password = "Password is required";
+    } else if (password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+    
+    if (!confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
   
-  const onSubmit = async (data) => {
-    if (data.password !== data.confirmPassword) {
-      return; // Form validation will handle this
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
     }
     
     setIsSubmitting(true);
-    const success = await onRegister(data.name, data.email, data.password);
+    const success = await onRegister(name, email, password);
     setIsSubmitting(false);
     
     if (success && onSuccess) {
@@ -181,23 +220,18 @@ const RegisterForm = ({ onRegister, onSuccess }) => {
         <CardTitle>Create Account</CardTitle>
         <CardDescription>Enter your details to create a new account</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <Input
               id="name"
               placeholder="John Doe"
-              {...register("name", { 
-                required: "Name is required",
-                minLength: {
-                  value: 2,
-                  message: "Name must be at least 2 characters"
-                }
-              })}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+            {formErrors.name && (
+              <p className="text-sm text-destructive">{formErrors.name}</p>
             )}
           </div>
           
@@ -208,16 +242,11 @@ const RegisterForm = ({ onRegister, onSuccess }) => {
               placeholder="name@example.com"
               type="email"
               autoComplete="email"
-              {...register("email", { 
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+$/i,
-                  message: "Invalid email address"
-                }
-              })}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+            {formErrors.email && (
+              <p className="text-sm text-destructive">{formErrors.email}</p>
             )}
           </div>
           
@@ -227,16 +256,11 @@ const RegisterForm = ({ onRegister, onSuccess }) => {
               id="password"
               type="password"
               autoComplete="new-password"
-              {...register("password", { 
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters"
-                }
-              })}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+            {formErrors.password && (
+              <p className="text-sm text-destructive">{formErrors.password}</p>
             )}
           </div>
           
@@ -246,14 +270,11 @@ const RegisterForm = ({ onRegister, onSuccess }) => {
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
-              {...register("confirmPassword", { 
-                required: "Please confirm your password",
-                validate: (value, formValues) => 
-                  value === formValues.password || "Passwords do not match"
-              })}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+            {formErrors.confirmPassword && (
+              <p className="text-sm text-destructive">{formErrors.confirmPassword}</p>
             )}
           </div>
         </CardContent>
